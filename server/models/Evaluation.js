@@ -32,10 +32,35 @@ const EvaluationSchema = new mongoose.Schema(
 
     criteria: [
       {
-        name: String,
-        score: Number,
-        maxScore: Number,
-        feedback: String
+        name: {
+          type: String,
+          required: true
+        },
+
+        score: {
+          type: Number,
+          required: true
+        },
+
+        maxScore: {
+          type: Number,
+          required: true
+        },
+
+        evidence: {
+          type: String,
+          default: ""
+        },
+
+        concern: {
+          type: String,
+          default: ""
+        },
+
+        suggestion: {
+          type: String,
+          default: ""
+        }
       }
     ],
 

@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-
 import api from "../services/api";
 import Loading from "../components/Loading";
 import FeedbackCard from "../components/FeedbackCard";
 
 function Feedback() {
   const { attemptId } = useParams();
-
   const [attempt, setAttempt] = useState(null);
   const [loading, setLoading] = useState(true);
   const [retrying, setRetrying] = useState(false);
@@ -16,13 +14,8 @@ function Feedback() {
   const loadAttempt = async () => {
     try {
       const response = await api.get(`/attempts/${attemptId}`);
-
-      console.log("ATTEMPT DATA:", response.data);
-
       setAttempt(response.data);
     } catch (err) {
-      console.error("LOAD ATTEMPT ERROR:", err);
-
       setError("Could not load this attempt.");
     } finally {
       setLoading(false);
@@ -39,14 +32,11 @@ function Feedback() {
 
     try {
       await api.post(`/attempts/${attemptId}/retry-evaluation`);
-
       await loadAttempt();
     } catch (err) {
-      console.error("RETRY ERROR:", err);
-
       setError(
         err.response?.data?.message ||
-          "Could not retry evaluation."
+        "Could not retry evaluation."
       );
     } finally {
       setRetrying(false);
@@ -71,16 +61,13 @@ function Feedback() {
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-10">
-
-      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="font-semibold text-[#6f9f71]">
             Evaluation
           </p>
-
           <h1 className="mt-2 text-3xl font-bold text-gray-800">
-            {attempt.problem?.title || "LLD Problem"}
+            {attempt.problem?.title}
           </h1>
         </div>
 
@@ -89,26 +76,18 @@ function Feedback() {
         </span>
       </div>
 
-      {/* Evaluation in progress */}
       {attempt.status === "EVALUATING" && (
         <div className="mt-8 rounded-2xl border border-[#dce8dc] bg-white p-6">
-          <h2 className="text-xl font-bold">
-            Evaluation in progress
-          </h2>
-
+          <h2 className="text-xl font-bold">Evaluation in progress</h2>
           <p className="mt-2 text-gray-600">
             Your submission is safe. We are waiting for the evaluator.
           </p>
         </div>
       )}
 
-      {/* Evaluation failed */}
       {attempt.status === "FAILED" && (
         <div className="mt-8 rounded-2xl border border-red-200 bg-red-50 p-6">
-          <h2 className="font-bold text-red-800">
-            Evaluation failed
-          </h2>
-
+          <h2 className="font-bold text-red-800">Evaluation failed</h2>
           <p className="mt-2 text-red-700">
             Your submission was saved. You can retry the evaluation.
           </p>
@@ -123,110 +102,73 @@ function Feedback() {
         </div>
       )}
 
-      {/* Evaluation completed */}
-      {evaluation && attempt.status === "COMPLETED" && (
+      {evaluation && evaluation.status === "COMPLETED" && (
         <>
-          {/* Overall Score */}
           <section className="mt-8 rounded-2xl border border-[#dce8dc] bg-white p-6">
-            <p className="text-sm text-gray-500">
-              Overall Score
-            </p>
+            <p className="text-sm text-gray-500">Overall Score</p>
 
             <div className="mt-2 flex items-end gap-2">
               <span className="text-5xl font-bold text-[#5f8f61]">
                 {evaluation.overallScore}
               </span>
-
-              <span className="mb-2 text-gray-500">
-                / 100
-              </span>
+              <span className="mb-2 text-gray-500">/ 10</span>
             </div>
 
             <p className="mt-5 leading-7 text-gray-700">
-              {evaluation.summary}
-            </p>
-
-            {/* Evaluator type */}
-            <p className="mt-4 text-sm text-gray-500">
-              Evaluated by:{" "}
-              <span className="font-semibold text-[#5f8f61]">
-                {evaluation.evaluatorType === "RULE_BASED"
-                  ? "Rule-Based Evaluator"
-                  : "AI Evaluator"}
-              </span>
+              {evaluation.overallSummary}
             </p>
           </section>
 
-          {/* Criteria */}
           <section className="mt-6">
             <h2 className="mb-4 text-2xl font-bold">
               Criterion Feedback
             </h2>
 
             <div className="space-y-4">
-              {evaluation.criteria?.map((criterion, index) => (
-                <FeedbackCard
-                  key={index}
-                  criterion={criterion}
-                />
+              {evaluation.criteria.map((criterion, index) => (
+                <FeedbackCard key={index} criterion={criterion} />
               ))}
             </div>
           </section>
 
-          {/* Strengths and Improvements */}
           <section className="mt-6 grid gap-6 md:grid-cols-2">
-
-            {/* Strengths */}
             <div className="rounded-2xl border border-[#dce8dc] bg-white p-6">
-              <h2 className="text-xl font-bold">
-                Strengths
-              </h2>
+              <h2 className="text-xl font-bold">Strengths</h2>
 
               <ul className="mt-4 space-y-3">
-                {evaluation.strengths?.map((item, index) => (
-                  <li
-                    key={index}
-                    className="text-gray-700"
-                  >
-                    <span className="mr-2 text-[#6f9f71]">
-                      ✓
-                    </span>
-
+                {evaluation.strengths.map((item, index) => (
+                  <li key={index} className="text-gray-700">
+                    <span className="mr-2 text-[#6f9f71]">✓</span>
                     {item}
                   </li>
                 ))}
               </ul>
             </div>
 
-            {/* Improvements */}
             <div className="rounded-2xl border border-[#dce8dc] bg-white p-6">
-              <h2 className="text-xl font-bold">
-                Improvements
-              </h2>
+              <h2 className="text-xl font-bold">Improvements</h2>
 
               <ul className="mt-4 space-y-3">
-                {evaluation.improvements?.map((item, index) => (
-                  <li
-                    key={index}
-                    className="text-gray-700"
-                  >
-                    <span className="mr-2 text-amber-600">
-                      !
-                    </span>
-
+                {evaluation.improvements.map((item, index) => (
+                  <li key={index} className="text-gray-700">
+                    <span className="mr-2 text-amber-600">!</span>
                     {item}
                   </li>
                 ))}
               </ul>
             </div>
+          </section>
 
+          <section className="mt-6 rounded-2xl border border-[#dce8dc] bg-[#f0f7f0] p-6">
+            <h2 className="text-xl font-bold">Try Next</h2>
+            <p className="mt-3 leading-7 text-gray-700">
+              {evaluation.nextChallenge}
+            </p>
           </section>
         </>
       )}
 
-      {/* Bottom buttons */}
       <div className="mt-8 flex flex-wrap gap-4">
-
         <Link
           to="/problems"
           className="rounded-lg bg-[#a8cfa8] px-5 py-3 font-semibold text-[#234225]"
@@ -240,7 +182,6 @@ function Feedback() {
         >
           View History
         </Link>
-
       </div>
     </main>
   );
