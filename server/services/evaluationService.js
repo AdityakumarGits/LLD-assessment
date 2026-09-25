@@ -59,15 +59,18 @@ const evaluateAttempt = async (attemptId) => {
     // Save evaluation
     // --------------------------------
 
-    const evaluation = await Evaluation.create({
-      attempt: attempt._id,
-      overallScore: result.overallScore,
-      summary: result.summary,
-      strengths: result.strengths,
-      improvements: result.improvements,
-      criteria: result.criteria,
-      evaluatorType: evaluationType
-    });
+const evaluation = new Evaluation({
+  attempt: attempt._id,
+  overallScore,
+  summary:
+    result.summary ||
+    result.overallSummary ||
+    "Evaluation completed successfully.",
+  strengths: result.strengths || [],
+  improvements: result.improvements || [],
+  criteria: result.criteria || [],
+  evaluatorType: "AI",
+});
 
     attempt.evaluation = evaluation._id;
     attempt.status = "COMPLETED";
