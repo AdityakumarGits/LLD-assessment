@@ -5,77 +5,74 @@ const EvaluationSchema = new mongoose.Schema(
     attempt: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Attempt",
-      required: true
+      required: true,
     },
 
     overallScore: {
       type: Number,
-      required: true
+      required: true,
     },
 
     summary: {
       type: String,
-      required: true
+      required: true,
     },
 
     strengths: [
       {
-        type: String
-      }
+        type: String,
+      },
     ],
 
     improvements: [
       {
-        type: String
-      }
+        type: String,
+      },
     ],
 
     criteria: [
       {
         name: {
           type: String,
-          required: true
+          required: true,
         },
 
         score: {
           type: Number,
-          required: true
+          required: true,
         },
 
         maxScore: {
           type: Number,
-          required: true
+          required: true,
         },
 
         evidence: {
           type: String,
-          default: ""
+          default: "",
         },
 
         concern: {
           type: String,
-          default: ""
+          default: "",
         },
 
         suggestion: {
           type: String,
-          default: ""
-        }
-      }
+          default: "",
+        },
+      },
     ],
 
     evaluatorType: {
       type: String,
       enum: ["AI", "RULE_BASED"],
-      default: "AI"
-    }
+      default: "AI",
+    },
   },
   {
-    timestamps: true
+    timestamps: true,
   }
 );
 
-module.exports = mongoose.model(
-  "Evaluation",
-  EvaluationSchema
-);
+module.exports = mongoose.model("Evaluation", EvaluationSchema);

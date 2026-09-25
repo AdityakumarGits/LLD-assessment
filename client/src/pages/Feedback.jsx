@@ -6,184 +6,264 @@ import FeedbackCard from "../components/FeedbackCard";
 
 function Feedback() {
   const { attemptId } = useParams();
+
   const [attempt, setAttempt] = useState(null);
+  const [evaluation, setEvaluation] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [retrying, setRetrying] = useState(false);
   const [error, setError] = useState("");
 
-  const loadAttempt = async () => {
-    try {
-      const response = await api.get(`/attempts/${attemptId}`);
-      setAttempt(response.data);
-    } catch (err) {
-      setError("Could not load this attempt.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    loadAttempt();
+    const fetchFeedback = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const response = await api.get(`/attempts/${attemptId}`);
+
+        console.log("Feedback API Response:", response.data);
+
+        setAttempt(response.data.attempt);
+        setEvaluation(response.data.evaluation);
+      } catch (err) {
+        console.error("Failed to fetch feedback:", err);
+
+        setError(
+          err.response?.data?.message ||
+            "Unable to load feedback. Please try again."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (attemptId) {
+      fetchFeedback();
+    }
   }, [attemptId]);
 
-  const retryEvaluation = async () => {
-    setRetrying(true);
-    setError("");
-
-    try {
-      await api.post(`/attempts/${attemptId}/retry-evaluation`);
-      await loadAttempt();
-    } catch (err) {
-      setError(
-        err.response?.data?.message ||
-        "Could not retry evaluation."
-      );
-    } finally {
-      setRetrying(false);
-    }
-  };
-
   if (loading) {
-    return <Loading text="Loading evaluation..." />;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-green-50">
+        <Loading />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-green-50 flex items-center justify-center px-4">
+        <div className="bg-white rounded-xl shadow-md p-8 max-w-md w-full text-center">
+          <h2 className="text-xl font-semibold text-red-600 mb-3">
+            Unable to Load Feedback
+          </h2>
+
+          <p className="text-gray-600 mb-6">{error}</p>
+
+          <Link
+            to="/history"
+            className="inline-block bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700"
+          >
+            Back to History
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   if (!attempt) {
     return (
-      <main className="mx-auto max-w-4xl px-6 py-12">
-        <div className="rounded-xl bg-red-50 p-5 text-red-700">
-          {error || "Attempt not found."}
-        </div>
-      </main>
+      <div className="min-h-screen bg-green-50 flex items-center justify-center">
+        <p className="text-gray-600">Attempt not found.</p>
+      </div>
     );
   }
 
-  const evaluation = attempt.evaluation;
+  const isCompleted = attempt.status === "COMPLETED";
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-10">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="font-semibold text-[#6f9f71]">
-            Evaluation
-          </p>
-          <h1 className="mt-2 text-3xl font-bold text-gray-800">
-            {attempt.problem?.title}
-          </h1>
-        </div>
+    <div className="min-h-screen bg-green-50 py-10 px-4">
+      <div className="max-w-5xl mx-auto">
 
-        <span className="rounded-full bg-[#edf6ed] px-4 py-2 text-sm font-bold text-[#5f8f61]">
-          {attempt.status}
-        </span>
-      </div>
-
-      {attempt.status === "EVALUATING" && (
-        <div className="mt-8 rounded-2xl border border-[#dce8dc] bg-white p-6">
-          <h2 className="text-xl font-bold">Evaluation in progress</h2>
-          <p className="mt-2 text-gray-600">
-            Your submission is safe. We are waiting for the evaluator.
-          </p>
-        </div>
-      )}
-
-      {attempt.status === "FAILED" && (
-        <div className="mt-8 rounded-2xl border border-red-200 bg-red-50 p-6">
-          <h2 className="font-bold text-red-800">Evaluation failed</h2>
-          <p className="mt-2 text-red-700">
-            Your submission was saved. You can retry the evaluation.
-          </p>
-
-          <button
-            onClick={retryEvaluation}
-            disabled={retrying}
-            className="mt-4 rounded-lg bg-white px-5 py-2 font-semibold text-red-700"
+        {/* Header */}
+        <div className="mb-8">
+          <Link
+            to="/history"
+            className="text-green-700 hover:text-green-900 text-sm font-medium"
           >
-            {retrying ? "Retrying..." : "Retry Evaluation"}
-          </button>
+            ← Back to History
+          </Link>
+
+          <h1 className="text-3xl font-bold text-gray-800 mt-4">
+            Evaluation Feedback
+          </h1>
+
+          <p className="text-gray-600 mt-2">
+            Review your LLD submission and improve your design.
+          </p>
         </div>
-      )}
 
-      {evaluation && evaluation.status === "COMPLETED" && (
-        <>
-          <section className="mt-8 rounded-2xl border border-[#dce8dc] bg-white p-6">
-            <p className="text-sm text-gray-500">Overall Score</p>
-
-            <div className="mt-2 flex items-end gap-2">
-              <span className="text-5xl font-bold text-[#5f8f61]">
-                {evaluation.overallScore}
-              </span>
-              <span className="mb-2 text-gray-500">/ 10</span>
-            </div>
-
-            <p className="mt-5 leading-7 text-gray-700">
-              {evaluation.overallSummary}
-            </p>
-          </section>
-
-          <section className="mt-6">
-            <h2 className="mb-4 text-2xl font-bold">
-              Criterion Feedback
+        {/* Evaluation not completed */}
+        {!isCompleted && (
+          <div className="bg-white rounded-xl shadow-md p-8 text-center mb-8">
+            <h2 className="text-xl font-semibold text-gray-800 mb-3">
+              Evaluation is not completed yet
             </h2>
 
-            <div className="space-y-4">
-              {evaluation.criteria.map((criterion, index) => (
-                <FeedbackCard key={index} criterion={criterion} />
-              ))}
-            </div>
-          </section>
-
-          <section className="mt-6 grid gap-6 md:grid-cols-2">
-            <div className="rounded-2xl border border-[#dce8dc] bg-white p-6">
-              <h2 className="text-xl font-bold">Strengths</h2>
-
-              <ul className="mt-4 space-y-3">
-                {evaluation.strengths.map((item, index) => (
-                  <li key={index} className="text-gray-700">
-                    <span className="mr-2 text-[#6f9f71]">✓</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="rounded-2xl border border-[#dce8dc] bg-white p-6">
-              <h2 className="text-xl font-bold">Improvements</h2>
-
-              <ul className="mt-4 space-y-3">
-                {evaluation.improvements.map((item, index) => (
-                  <li key={index} className="text-gray-700">
-                    <span className="mr-2 text-amber-600">!</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </section>
-
-          <section className="mt-6 rounded-2xl border border-[#dce8dc] bg-[#f0f7f0] p-6">
-            <h2 className="text-xl font-bold">Try Next</h2>
-            <p className="mt-3 leading-7 text-gray-700">
-              {evaluation.nextChallenge}
+            <p className="text-gray-600 mb-4">
+              Current status:
+              <span className="font-semibold ml-2 text-green-700">
+                {attempt.status}
+              </span>
             </p>
-          </section>
-        </>
-      )}
 
-      <div className="mt-8 flex flex-wrap gap-4">
-        <Link
-          to="/problems"
-          className="rounded-lg bg-[#a8cfa8] px-5 py-3 font-semibold text-[#234225]"
-        >
-          Practice Another Problem
-        </Link>
+            <Link
+              to="/history"
+              className="inline-block bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700"
+            >
+              Back to History
+            </Link>
+          </div>
+        )}
 
-        <Link
-          to="/history"
-          className="rounded-lg border border-[#cddfcd] bg-white px-5 py-3 font-semibold"
-        >
-          View History
-        </Link>
+        {/* Completed Evaluation */}
+        {isCompleted && evaluation && (
+          <>
+            {/* Score Card */}
+            <div className="bg-white rounded-xl shadow-md p-8 mb-8">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-800">
+                    Overall Score
+                  </h2>
+
+                  <p className="text-gray-500 mt-1">
+                    Based on your LLD submission
+                  </p>
+                </div>
+
+                <div className="flex items-baseline">
+                  <span className="text-5xl font-bold text-green-600">
+                    {evaluation.overallScore}
+                  </span>
+
+                  <span className="ml-2 text-gray-500 text-lg">
+                    / 100
+                  </span>
+                </div>
+              </div>
+
+              {/* Evaluator Type */}
+              <div className="mt-6">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700">
+                  Evaluated by:{" "}
+                  {evaluation.evaluatorType === "AI"
+                    ? "AI Evaluator"
+                    : "Rule-Based Evaluator"}
+                </span>
+              </div>
+            </div>
+
+            {/* Summary */}
+            <div className="bg-white rounded-xl shadow-md p-8 mb-8">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">
+                Summary
+              </h2>
+
+              <p className="text-gray-600 leading-7">
+                {evaluation.summary ||
+                  "No overall summary was provided for this evaluation."}
+              </p>
+            </div>
+
+            {/* Strengths */}
+            {evaluation.strengths?.length > 0 && (
+              <div className="bg-white rounded-xl shadow-md p-8 mb-8">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">
+                  Strengths
+                </h2>
+
+                <ul className="space-y-3">
+                  {evaluation.strengths.map((strength, index) => (
+                    <li
+                      key={index}
+                      className="flex items-start gap-3 text-gray-700"
+                    >
+                      <span className="text-green-600 font-bold">✓</span>
+                      <span>{strength}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Improvements */}
+            {evaluation.improvements?.length > 0 && (
+              <div className="bg-white rounded-xl shadow-md p-8 mb-8">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">
+                  Areas for Improvement
+                </h2>
+
+                <ul className="space-y-3">
+                  {evaluation.improvements.map((improvement, index) => (
+                    <li
+                      key={index}
+                      className="flex items-start gap-3 text-gray-700"
+                    >
+                      <span className="text-orange-500 font-bold">→</span>
+                      <span>{improvement}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Criteria */}
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-gray-800 mb-5">
+                Detailed Evaluation
+              </h2>
+
+              {evaluation.criteria?.length > 0 ? (
+                <div className="space-y-5">
+                  {evaluation.criteria.map((criterion, index) => (
+                    <FeedbackCard
+                      key={criterion._id || index}
+                      criterion={criterion}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-white rounded-xl shadow-md p-8 text-center">
+                  <p className="text-gray-500">
+                    No detailed criteria feedback available.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Bottom Actions */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-10">
+
+              <Link
+                to="/problems"
+                className="bg-green-600 text-white px-6 py-3 rounded-lg text-center font-medium hover:bg-green-700 transition"
+              >
+                Practice Another Problem
+              </Link>
+
+              <Link
+                to="/history"
+                className="border border-green-600 text-green-700 px-6 py-3 rounded-lg text-center font-medium hover:bg-green-50 transition"
+              >
+                View History
+              </Link>
+
+            </div>
+          </>
+        )}
       </div>
-    </main>
+    </div>
   );
 }
 
