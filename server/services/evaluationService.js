@@ -1,6 +1,5 @@
 const Attempt = require("../models/Attempt");
 const Evaluation = require("../models/Evaluation");
-
 const AIEvaluator = require("./aiEvaluator");
 const RuleBasedEvaluator = require("./ruleBasedEvaluator");
 
@@ -56,28 +55,46 @@ const evaluateAttempt = async (attemptId) => {
     }
 
     // --------------------------------
-    // Save evaluation
+    // Normalize score
     // --------------------------------
 
-const evaluation = new Evaluation({
-  attempt: attempt._id,
-  overallScore,
-  summary:
-    result.summary ||
-    result.overallSummary ||
-    "Evaluation completed successfully.",
-  strengths: result.strengths || [],
-  improvements: result.improvements || [],
-  criteria: result.criteria || [],
-  evaluatorType: "AI",
-});
+    const rawScore = Number(result.overallScore || 0);
+
+    const overallScore =
+      rawScore <= 10
+        ? Math.round(rawScore * 10)
+        : Math.round(rawScore);
+
+    // --------------------------------
+    // Normalize summary
+    // --------------------------------
+
+    const summary =
+      result.summary ||
+      result.overallSummary ||
+      "Evaluation completed successfully.";
+
+    // Save evaluation
+
+    const evaluation = await Evaluation.create({
+      attempt: attempt._id,
+      overallScore,
+      summary,
+      strengths: result.strengths || [],
+      improvements: result.improvements || [],
+      criteria: result.criteria || [],
+      evaluatorType: evaluationType
+    });
+
+    
+    // Update attempt
 
     attempt.evaluation = evaluation._id;
     attempt.status = "COMPLETED";
 
     await attempt.save();
-
     return evaluation;
+
   } catch (error) {
     console.error(
       "EVALUATION SERVICE ERROR:",

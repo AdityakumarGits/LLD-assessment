@@ -21,15 +21,14 @@ function Feedback() {
         const response = await api.get(`/attempts/${attemptId}`);
 
         console.log("Feedback API Response:", response.data);
-
-        setAttempt(response.data.attempt);
+        setAttempt(response.data);
         setEvaluation(response.data.evaluation);
       } catch (err) {
         console.error("Failed to fetch feedback:", err);
 
         setError(
           err.response?.data?.message ||
-            "Unable to load feedback. Please try again."
+            "Unable to load feedback. Please try again.",
         );
       } finally {
         setLoading(false);
@@ -83,7 +82,6 @@ function Feedback() {
   return (
     <div className="min-h-screen bg-green-50 py-10 px-4">
       <div className="max-w-5xl mx-auto">
-
         {/* Header */}
         <div className="mb-8">
           <Link
@@ -131,7 +129,6 @@ function Feedback() {
             {/* Score Card */}
             <div className="bg-white rounded-xl shadow-md p-8 mb-8">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-
                 <div>
                   <h2 className="text-xl font-semibold text-gray-800">
                     Overall Score
@@ -147,9 +144,7 @@ function Feedback() {
                     {evaluation.overallScore}
                   </span>
 
-                  <span className="ml-2 text-gray-500 text-lg">
-                    / 100
-                  </span>
+                  <span className="ml-2 text-gray-500 text-lg">/ 100</span>
                 </div>
               </div>
 
@@ -244,7 +239,6 @@ function Feedback() {
 
             {/* Bottom Actions */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center mt-10">
-
               <Link
                 to="/problems"
                 className="bg-green-600 text-white px-6 py-3 rounded-lg text-center font-medium hover:bg-green-700 transition"
@@ -258,7 +252,6 @@ function Feedback() {
               >
                 View History
               </Link>
-
             </div>
           </>
         )}
